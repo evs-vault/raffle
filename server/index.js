@@ -47,6 +47,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Simple test endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'RazzWars API is running!',
+    status: 'OK',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);

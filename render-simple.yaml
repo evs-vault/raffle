@@ -1,0 +1,65 @@
+services:
+  # Backend API Service
+  - type: web
+    name: raffle-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DEFAULT_ADMIN_PASSWORD
+        value: admin123
+      - key: DB_HOST
+        fromDatabase:
+          name: raffle-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: raffle-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: raffle-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: raffle-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: raffle-db
+          property: password
+
+  # Admin Frontend
+  - type: web
+    name: raffle-admin
+    env: static
+    buildCommand: cd admin && npm install && npm run build
+    staticPublishPath: admin/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://raffle-backend.onrender.com
+
+  # Player Frontend
+  - type: web
+    name: raffle-player
+    env: static
+    buildCommand: cd player && npm install && npm run build
+    staticPublishPath: player/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://raffle-backend.onrender.com
+      - key: REACT_APP_ADMIN_URL
+        value: https://raffle-admin.onrender.com
+
+databases:
+  - name: raffle-db
+    plan: free
+    databaseName: raffle_memory
+    user: raffle_user

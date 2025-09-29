@@ -62,15 +62,19 @@ async function setupDatabase() {
     `);
 
     // Create default admin user
-    const bcrypt = require('bcryptjs');
-    const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
-    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    try {
+      const bcrypt = require('bcryptjs');
+      const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
-    await pool.query(`
-      INSERT INTO admins (username, password_hash) 
-      VALUES ('admin', $1) 
-      ON CONFLICT (username) DO NOTHING
-    `, [hashedPassword]);
+      await pool.query(`
+        INSERT INTO admins (username, password_hash) 
+        VALUES ('admin', $1) 
+        ON CONFLICT (username) DO NOTHING
+      `, [hashedPassword]);
+    } catch (error) {
+      console.log('Admin user creation skipped:', error.message);
+    }
 
     console.log('Database setup completed successfully');
     return true;
