@@ -1,0 +1,67 @@
+services:
+  # Backend API Service
+  - type: web
+    name: razzwars-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DEFAULT_ADMIN_PASSWORD
+        value: admin123
+      - key: DB_HOST
+        fromDatabase:
+          name: razzwars-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: razzwars-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: razzwars-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: razzwars-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: razzwars-db
+          property: password
+      - key: CLIENT_URL
+        value: https://razzwars-admin.onrender.com,https://razzwars-player.onrender.com
+
+  # Admin Frontend
+  - type: web
+    name: razzwars-admin
+    env: static
+    buildCommand: cd admin && npm install && npm run build
+    staticPublishPath: admin/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://razzwars-backend.onrender.com
+
+  # Player Frontend
+  - type: web
+    name: razzwars-player
+    env: static
+    buildCommand: cd player && npm install && npm run build
+    staticPublishPath: player/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://razzwars-backend.onrender.com
+      - key: REACT_APP_ADMIN_URL
+        value: https://razzwars-admin.onrender.com
+
+databases:
+  - name: razzwars-db
+    plan: free
+    databaseName: razzwars_memory
+    user: razzwars_user

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DB_HOST=mongodb
+      - DB_PORT=27017
+      - DB_NAME=razzwars_memory
+    depends_on:
+      - mongodb
+    volumes:
+      - ./uploads:/app/uploads
+
+  mongodb:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=razzwars_memory
+    volumes:
+      - mongodb_data:/data/db
+
+  admin:
+    build:
+      context: .
+      dockerfile: admin.Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - app
+
+  player:
+    build:
+      context: .
+      dockerfile: player.Dockerfile
+    ports:
+      - "3001:80"
+    depends_on:
+      - app
+
+volumes:
+  mongodb_data:
