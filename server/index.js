@@ -9,7 +9,8 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
 const playerRoutes = require('./routes/players');
-const { connectToMongoDB } = require('./database/mongodb');
+const { connectToPostgreSQL } = require('./database/postgresql');
+const { setupDatabase } = require('./database/setup-postgresql');
 
 const app = express();
 const server = http.createServer(app);
@@ -79,14 +80,17 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 
 // Initialize database and start server
-connectToMongoDB().then((connected) => {
+connectToPostgreSQL().then(async (connected) => {
   if (connected) {
+    // Setup database tables
+    await setupDatabase();
+    
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
-      console.log('MongoDB connected successfully');
+      console.log('PostgreSQL connected successfully');
     });
   } else {
-    console.error('Failed to connect to MongoDB. Server not started.');
+    console.error('Failed to connect to PostgreSQL. Server not started.');
     process.exit(1);
   }
 }).catch(err => {
