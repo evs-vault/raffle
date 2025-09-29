@@ -1,7 +1,7 @@
 services:
   # Backend API Service
   - type: web
-    name: razzwars-backend
+    name: raffle-backend
     env: node
     plan: free
     buildCommand: npm install
@@ -17,51 +17,51 @@ services:
         value: admin123
       - key: DB_HOST
         fromDatabase:
-          name: razzwars-db
+          name: raffle-db
           property: host
       - key: DB_PORT
         fromDatabase:
-          name: razzwars-db
+          name: raffle-db
           property: port
       - key: DB_NAME
         fromDatabase:
-          name: razzwars-db
+          name: raffle-db
           property: database
       - key: DB_USER
         fromDatabase:
-          name: razzwars-db
+          name: raffle-db
           property: user
       - key: DB_PASSWORD
         fromDatabase:
-          name: razzwars-db
+          name: raffle-db
           property: password
       - key: CLIENT_URL
-        value: https://razzwars-admin.onrender.com,https://razzwars-player.onrender.com
+        value: https://raffle-admin.onrender.com,https://raffle-player.onrender.com
 
   # Admin Frontend
   - type: web
-    name: razzwars-admin
+    name: raffle-admin
     env: static
     buildCommand: cd admin && npm install && npm run build
     staticPublishPath: admin/build
     envVars:
       - key: REACT_APP_API_URL
-        value: https://razzwars-backend.onrender.com
+        value: https://raffle-backend.onrender.com
 
   # Player Frontend
   - type: web
-    name: razzwars-player
+    name: raffle-player
     env: static
     buildCommand: cd player && npm install && npm run build
     staticPublishPath: player/build
     envVars:
       - key: REACT_APP_API_URL
-        value: https://razzwars-backend.onrender.com
+        value: https://raffle-backend.onrender.com
       - key: REACT_APP_ADMIN_URL
-        value: https://razzwars-admin.onrender.com
+        value: https://raffle-admin.onrender.com
 
 databases:
-  - name: razzwars-db
+  - name: raffle-db
     plan: free
-    databaseName: razzwars_memory
-    user: razzwars_user
+    databaseName: raffle_memory
+    user: raffle_user
