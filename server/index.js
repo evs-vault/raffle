@@ -6,9 +6,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const authRoutes = require('./routes/auth');
-const gameRoutes = require('./routes/games');
-const playerRoutes = require('./routes/players');
+const authRoutes = require('./routes/auth-postgres');
+const gameRoutes = require('./routes/games-postgres');
+const playerRoutes = require('./routes/players-postgres');
 const { connectToPostgreSQL } = require('./database/postgresql');
 const { setupDatabase } = require('./database/setup-postgresql');
 

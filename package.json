@@ -10,7 +10,7 @@
     "build": "npm run build:admin && npm run build:player",
     "build:admin": "cd admin && npm install && npm run build",
     "build:player": "cd player && npm install && npm run build",
-    "start": "node server/simple-server.js",
+    "start": "node server/index.js",
     "setup-db": "node scripts/setup-database.js",
     "create-admin": "node server/scripts/create-admin.js"
   },
