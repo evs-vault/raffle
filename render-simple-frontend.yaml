@@ -5,7 +5,7 @@ services:
     env: node
     plan: free
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -35,26 +35,32 @@ services:
         fromDatabase:
           name: raffle-db
           property: password
-      - key: CLIENT_URL
-        value: https://raffle-admin.onrender.com,https://raffle-player.onrender.com
 
   # Admin Frontend
   - type: web
     name: raffle-admin
     env: static
-    buildCommand: cd admin && npm ci && npm run build
+    buildCommand: |
+      cd admin
+      npm install
+      npm run build
     staticPublishPath: admin/build
     envVars:
       - key: REACT_APP_API_URL
         value: https://raffle-backend.onrender.com
       - key: GENERATE_SOURCEMAP
         value: false
+      - key: CI
+        value: false
 
   # Player Frontend
   - type: web
     name: raffle-player
     env: static
-    buildCommand: cd player && npm ci && npm run build
+    buildCommand: |
+      cd player
+      npm install
+      npm run build
     staticPublishPath: player/build
     envVars:
       - key: REACT_APP_API_URL
@@ -62,6 +68,8 @@ services:
       - key: REACT_APP_ADMIN_URL
         value: https://raffle-admin.onrender.com
       - key: GENERATE_SOURCEMAP
+        value: false
+      - key: CI
         value: false
 
 databases:
