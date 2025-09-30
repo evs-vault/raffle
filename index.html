@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RazzWars Memory Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card { width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card.flipped { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Main Menu -->
+        <div id="mainMenu" class="max-w-md mx-auto">
+            <div class="glass rounded-2xl p-8 text-center">
+                <h1 class="text-4xl font-bold gradient-text mb-2">RazzWars</h1>
+                <p class="text-white/80 mb-8">Memory Card Game</p>
+                
+                <div class="space-y-4">
+                    <button id="adminBtn" class="w-full btn-primary text-white py-3 px-4 rounded-lg font-medium">Admin Panel</button>
+                    <button id="playerBtn" class="w-full bg-white/20 text-white py-3 px-4 rounded-lg font-medium">Join Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="max-w-4xl mx-auto" style="display: none;">
+            <div class="glass rounded-2xl p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold gradient-text mb-2">Admin Panel</h1>
+                    <button id="backToMenu" class="text-white/60 hover:text-white">← Back to Menu</button>
+                </div>
+
+                <!-- Login Form -->
+                <div id="adminLogin" class="max-w-md mx-auto">
+                    <form id="loginForm" class="space-y-4">
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Username</label>
+                            <input type="text" id="username" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50" placeholder="admin" required>
+                        </div>
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Password</label>
+                            <input type="password" id="password" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50" placeholder="admin123" required>
+                        </div>
+                        <button type="submit" class="w-full btn-primary text-white py-2 px-4 rounded-lg font-medium">Login</button>
+                    </form>
+                </div>
+
+                <!-- Game Management -->
+                <div id="gameManagement" style="display: none;">
+                    <div class="mb-6">
+                        <button id="createGameBtn" class="btn-primary text-white py-2 px-4 rounded-lg font-medium">Create New Game</button>
+                    </div>
+                    <div id="gamesList" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Interface -->
+        <div id="playerPanel" class="max-w-md mx-auto" style="display: none;">
+            <div class="glass rounded-2xl p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold gradient-text mb-2">Join Game</h1>
+                    <button id="backToMenu2" class="text-white/60 hover:text-white">← Back to Menu</button>
+                </div>
+
+                <form id="joinForm" class="space-y-6">
+                    <div>
+                        <label class="block text-white/80 text-sm mb-2">Game Code</label>
+                        <input type="text" id="gameCode" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 font-mono tracking-wider" placeholder="Enter 8-character code" maxlength="8" required>
+                    </div>
+                    <button type="submit" class="w-full btn-primary text-white py-3 px-4 rounded-lg font-medium">Join Game</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="max-w-4xl mx-auto" style="display: none;">
+            <div class="glass rounded-2xl p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold gradient-text mb-2" id="gameTitle">Memory Game</h1>
+                    <p class="text-white/80" id="gameStatus">Waiting for game to start...</p>
+                </div>
+
+                <div class="glass rounded-xl p-6 mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Your Player Info</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-white/60 mb-1">Name</div>
+                            <div class="text-white font-medium" id="playerName">Player</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-white/60 mb-1">Player Code</div>
+                            <div class="text-blue-300 font-mono text-lg" id="playerCode">ABC12345</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="gameBoard" class="grid gap-2 justify-center mb-8" style="display: none;"></div>
+
+                <div class="text-center">
+                    <button id="leaveGame" class="bg-red-500/20 text-red-300 py-2 px-4 rounded-lg font-medium">Leave Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple in-memory storage for demo
+        let games = [];
+        let currentGame = null;
+        let currentPlayer = null;
+        let isLoggedIn = false;
+
+        // Navigation
+        document.getElementById('adminBtn').addEventListener('click', () => {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+        });
+
+        document.getElementById('playerBtn').addEventListener('click', () => {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('playerPanel').style.display = 'block';
+        });
+
+        document.getElementById('backToMenu').addEventListener('click', () => {
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('mainMenu').style.display = 'block';
+        });
+
+        document.getElementById('backToMenu2').addEventListener('click', () => {
+            document.getElementById('playerPanel').style.display = 'none';
+            document.getElementById('mainMenu').style.display = 'block';
+        });
+
+        // Admin Login
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === 'admin123') {
+                isLoggedIn = true;
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('gameManagement').style.display = 'block';
+                loadGames();
+            } else {
+                alert('Invalid credentials. Use admin/admin123');
+            }
+        });
+
+        // Create Game
+        document.getElementById('createGameBtn').addEventListener('click', () => {
+            const name = prompt('Game Name:') || 'Memory Challenge';
+            const description = prompt('Description:') || 'Test your memory!';
+            const gridSize = parseInt(prompt('Grid Size (4, 6, or 8):') || '4');
+            const maxPlayers = parseInt(prompt('Max Players:') || '4');
+
+            const game = {
+                id: Date.now(),
+                name,
+                description,
+                grid_size: gridSize,
+                max_players: maxPlayers,
+                status: 'waiting',
+                game_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                player_count: 0
+            };
+
+            games.push(game);
+            loadGames();
+            alert(`Game created! Code: ${game.game_code}`);
+        });
+
+        // Load Games
+        function loadGames() {
+            const gamesList = document.getElementById('gamesList');
+            gamesList.innerHTML = games.map(game => `
+                <div class="glass rounded-lg p-4">
+                    <h3 class="text-white font-medium">${game.name}</h3>
+                    <p class="text-white/60 text-sm">Code: ${game.game_code}</p>
+                    <p class="text-white/60 text-sm">Status: ${game.status}</p>
+                    <p class="text-white/60 text-sm">Players: ${game.player_count}/${game.max_players}</p>
+                    <button onclick="startGame(${game.id})" class="mt-2 bg-green-500/20 text-green-300 py-1 px-3 rounded text-sm">Start Game</button>
+                </div>
+            `).join('');
+        }
+
+        // Start Game
+        window.startGame = function(gameId) {
+            const game = games.find(g => g.id === gameId);
+            if (game) {
+                game.status = 'active';
+                loadGames();
+                alert('Game started!');
+            }
+        };
+
+        // Join Game
+        document.getElementById('joinForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const gameCode = document.getElementById('gameCode').value.toUpperCase();
+            const game = games.find(g => g.game_code === gameCode);
+
+            if (game) {
+                if (game.status !== 'active') {
+                    alert('Game is not active yet. Wait for admin to start it.');
+                    return;
+                }
+
+                currentGame = game;
+                currentPlayer = {
+                    id: Date.now(),
+                    name: `Player ${game.player_count + 1}`,
+                    player_code: Math.random().toString(36).substring(2, 10).toUpperCase()
+                };
+
+                game.player_count++;
+                showGameScreen();
+            } else {
+                alert('Game not found. Check the code.');
+            }
+        });
+
+        // Show Game Screen
+        function showGameScreen() {
+            document.getElementById('playerPanel').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            
+            document.getElementById('gameTitle').textContent = currentGame.name;
+            document.getElementById('playerName').textContent = currentPlayer.name;
+            document.getElementById('playerCode').textContent = currentPlayer.player_code;
+            
+            if (currentGame.status === 'active') {
+                document.getElementById('gameStatus').textContent = 'Game is active!';
+                createGameBoard();
+            }
+        }
+
+        // Create Game Board
+        function createGameBoard() {
+            const board = document.getElementById('gameBoard');
+            const size = currentGame.grid_size;
+            const totalCards = size * size;
+            
+            board.style.display = 'grid';
+            board.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            board.innerHTML = '';
+            
+            for (let i = 0; i < totalCards; i++) {
+                const card = document.createElement('div');
+                card.className = 'card rounded-lg cursor-pointer flex items-center justify-center text-white font-bold text-xl';
+                card.textContent = '?';
+                card.addEventListener('click', () => flipCard(card, i));
+                board.appendChild(card);
+            }
+        }
+
+        // Flip Card
+        function flipCard(card, index) {
+            if (card.classList.contains('flipped')) return;
+            
+            card.classList.add('flipped');
+            card.textContent = Math.floor(index / 2) + 1;
+            
+            setTimeout(() => {
+                if (Math.random() > 0.5) {
+                    card.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                } else {
+                    card.classList.remove('flipped');
+                    card.textContent = '?';
+                }
+            }, 1000);
+        }
+
+        // Leave Game
+        document.getElementById('leaveGame').addEventListener('click', () => {
+            currentGame = null;
+            currentPlayer = null;
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('mainMenu').style.display = 'block';
+            document.getElementById('gameCode').value = '';
+        });
+    </script>
+</body>
+</html>
