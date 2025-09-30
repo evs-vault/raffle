@@ -36,15 +36,35 @@ services:
           name: raffle-db
           property: password
 
-  # Single App (Everything in one HTML file)
+  # Admin Frontend (Your Real React App)
   - type: web
-    name: raffle-app
+    name: raffle-admin
     env: static
-    buildCommand: echo "No build needed"
-    staticPublishPath: .
+    buildCommand: cd admin && npm install && npm run build
+    staticPublishPath: admin/build
     envVars:
       - key: REACT_APP_API_URL
         value: https://raffle-backend.onrender.com
+      - key: GENERATE_SOURCEMAP
+        value: false
+      - key: CI
+        value: false
+
+  # Player Frontend (Your Real React App)
+  - type: web
+    name: raffle-player
+    env: static
+    buildCommand: cd player && npm install && npm run build
+    staticPublishPath: player/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://raffle-backend.onrender.com
+      - key: REACT_APP_ADMIN_URL
+        value: https://raffle-admin.onrender.com
+      - key: GENERATE_SOURCEMAP
+        value: false
+      - key: CI
+        value: false
 
 databases:
   - name: raffle-db
