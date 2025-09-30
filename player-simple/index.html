@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RazzWars Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card { width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card.flipped { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Join Game Screen -->
+        <div id="joinScreen" class="max-w-md mx-auto">
+            <div class="glass rounded-2xl p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-bold gradient-text mb-2">RazzWars</h1>
+                    <p class="text-white/80">Memory Card Game</p>
+                </div>
+
+                <form id="joinForm" class="space-y-6">
+                    <div>
+                        <label class="block text-white/80 text-sm mb-2">Game Code</label>
+                        <input type="text" id="gameCode" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 font-mono tracking-wider" placeholder="Enter 8-character code" maxlength="8" required>
+                    </div>
+                    <button type="submit" class="w-full btn-primary text-white py-3 px-4 rounded-lg font-medium">Join Game</button>
+                </form>
+
+                <div class="mt-8 text-center">
+                    <p class="text-white/60 text-sm mb-4">Don't have a game code?</p>
+                    <a href="https://raffle-admin.onrender.com" target="_blank" class="text-blue-300 hover:text-blue-200 text-sm font-medium">Create a new game (Admin Panel)</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="max-w-4xl mx-auto" style="display: none;">
+            <div class="glass rounded-2xl p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold gradient-text mb-2" id="gameTitle">Memory Game</h1>
+                    <p class="text-white/80" id="gameStatus">Waiting for game to start...</p>
+                </div>
+
+                <!-- Player Info -->
+                <div class="glass rounded-xl p-6 mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Your Player Info</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-white/60 mb-1">Name</div>
+                            <div class="text-white font-medium" id="playerName">Player</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-white/60 mb-1">Username</div>
+                            <div class="text-white font-medium" id="playerUsername">@player</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-white/60 mb-1">Player Code</div>
+                            <div class="text-blue-300 font-mono text-lg" id="playerCode">ABC12345</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-white/60 mb-1">Status</div>
+                            <div class="text-green-300 font-medium">Ready to Play</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game Board -->
+                <div id="gameBoard" class="grid gap-2 justify-center mb-8" style="display: none;">
+                    <!-- Cards will be generated here -->
+                </div>
+
+                <!-- Game Stats -->
+                <div class="grid grid-cols-2 gap-6 mb-8">
+                    <div class="glass rounded-xl p-4 text-center">
+                        <div class="text-2xl font-bold text-white" id="gridSize">4x4</div>
+                        <div class="text-white/60 text-sm">Grid Size</div>
+                    </div>
+                    <div class="glass rounded-xl p-4 text-center">
+                        <div class="text-2xl font-bold text-white" id="playerCount">0/4</div>
+                        <div class="text-white/60 text-sm">Players</div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button id="leaveGame" class="bg-red-500/20 text-red-300 py-2 px-4 rounded-lg font-medium">Leave Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://raffle-backend.onrender.com';
+        let currentGame = null;
+        let currentPlayer = null;
+
+        // Join game functionality
+        document.getElementById('joinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const gameCode = document.getElementById('gameCode').value.toUpperCase();
+
+            try {
+                const response = await fetch(`${API_URL}/api/players/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ game_code: gameCode })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentGame = data.game;
+                    currentPlayer = data.player;
+                    
+                    showGameScreen();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Failed to join game');
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        });
+
+        // Show game screen
+        function showGameScreen() {
+            document.getElementById('joinScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            
+            document.getElementById('gameTitle').textContent = currentGame.name;
+            document.getElementById('playerName').textContent = currentPlayer.name;
+            document.getElementById('playerUsername').textContent = '@' + currentPlayer.username;
+            document.getElementById('playerCode').textContent = currentPlayer.player_code;
+            document.getElementById('gridSize').textContent = currentGame.grid_size + 'x' + currentGame.grid_size;
+            document.getElementById('playerCount').textContent = currentGame.player_count + '/' + currentGame.max_players;
+            
+            if (currentGame.status === 'active') {
+                document.getElementById('gameStatus').textContent = 'Game is active!';
+                createGameBoard();
+            } else {
+                document.getElementById('gameStatus').textContent = 'Waiting for game to start...';
+            }
+        }
+
+        // Create game board
+        function createGameBoard() {
+            const board = document.getElementById('gameBoard');
+            const size = currentGame.grid_size;
+            const totalCards = size * size;
+            
+            board.style.display = 'grid';
+            board.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            board.innerHTML = '';
+            
+            for (let i = 0; i < totalCards; i++) {
+                const card = document.createElement('div');
+                card.className = 'card rounded-lg cursor-pointer flex items-center justify-center text-white font-bold text-xl';
+                card.textContent = '?';
+                card.addEventListener('click', () => flipCard(card, i));
+                board.appendChild(card);
+            }
+        }
+
+        // Flip card
+        function flipCard(card, index) {
+            if (card.classList.contains('flipped')) return;
+            
+            card.classList.add('flipped');
+            card.textContent = Math.floor(index / 2) + 1; // Simple pairing logic
+            
+            // Check for matches (simplified)
+            setTimeout(() => {
+                if (Math.random() > 0.5) { // Random match for demo
+                    card.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                } else {
+                    card.classList.remove('flipped');
+                    card.textContent = '?';
+                }
+            }, 1000);
+        }
+
+        // Leave game
+        document.getElementById('leaveGame').addEventListener('click', () => {
+            currentGame = null;
+            currentPlayer = null;
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('joinScreen').style.display = 'block';
+            document.getElementById('gameCode').value = '';
+        });
+    </script>
+</body>
+</html>

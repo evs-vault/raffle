@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RazzWars Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
+    <div class="container mx-auto px-4 py-8">
+        <div class="glass rounded-2xl p-8 max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold gradient-text mb-2">RazzWars Admin</h1>
+                <p class="text-white/80">Memory Game Management</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Login Form -->
+                <div class="glass rounded-xl p-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">Admin Login</h2>
+                    <form id="loginForm" class="space-y-4">
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Username</label>
+                            <input type="text" id="username" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50" placeholder="admin" required>
+                        </div>
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Password</label>
+                            <input type="password" id="password" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50" placeholder="admin123" required>
+                        </div>
+                        <button type="submit" class="w-full btn-primary text-white py-2 px-4 rounded-lg font-medium">Login</button>
+                    </form>
+                </div>
+
+                <!-- Game Management -->
+                <div class="glass rounded-xl p-6" id="gameManagement" style="display: none;">
+                    <h2 class="text-xl font-semibold text-white mb-4">Game Management</h2>
+                    <div class="space-y-4">
+                        <button id="createGameBtn" class="w-full btn-primary text-white py-2 px-4 rounded-lg font-medium">Create New Game</button>
+                        <div id="gamesList" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Game Modal -->
+            <div id="createGameModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="display: none;">
+                <div class="glass rounded-xl p-6 max-w-md w-full mx-4">
+                    <h3 class="text-xl font-semibold text-white mb-4">Create New Game</h3>
+                    <form id="createGameForm" class="space-y-4">
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Game Name</label>
+                            <input type="text" id="gameName" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50" placeholder="Memory Challenge" required>
+                        </div>
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Description</label>
+                            <textarea id="gameDescription" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50" placeholder="Test your memory skills!"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-white/80 text-sm mb-2">Grid Size</label>
+                                <select id="gridSize" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white">
+                                    <option value="4">4x4</option>
+                                    <option value="6">6x6</option>
+                                    <option value="8">8x8</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-white/80 text-sm mb-2">Max Players</label>
+                                <input type="number" id="maxPlayers" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50" value="4" min="2" max="8">
+                            </div>
+                        </div>
+                        <div class="flex space-x-4">
+                            <button type="submit" class="flex-1 btn-primary text-white py-2 px-4 rounded-lg font-medium">Create Game</button>
+                            <button type="button" id="cancelCreate" class="flex-1 bg-white/20 text-white py-2 px-4 rounded-lg font-medium">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://raffle-backend.onrender.com';
+        let isLoggedIn = false;
+
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.token);
+                    isLoggedIn = true;
+                    document.getElementById('gameManagement').style.display = 'block';
+                    document.getElementById('loginForm').style.display = 'none';
+                    loadGames();
+                } else {
+                    alert('Login failed. Try admin/admin123');
+                }
+            } catch (error) {
+                alert('Login failed. Check if backend is running.');
+            }
+        });
+
+        // Create game functionality
+        document.getElementById('createGameBtn').addEventListener('click', () => {
+            document.getElementById('createGameModal').style.display = 'flex';
+        });
+
+        document.getElementById('cancelCreate').addEventListener('click', () => {
+            document.getElementById('createGameModal').style.display = 'none';
+        });
+
+        document.getElementById('createGameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const gameData = {
+                name: document.getElementById('gameName').value,
+                description: document.getElementById('gameDescription').value,
+                grid_size: parseInt(document.getElementById('gridSize').value),
+                max_players: parseInt(document.getElementById('maxPlayers').value)
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/api/games`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(gameData)
+                });
+
+                if (response.ok) {
+                    const game = await response.json();
+                    alert(`Game created! Game Code: ${game.game_code}`);
+                    document.getElementById('createGameModal').style.display = 'none';
+                    loadGames();
+                } else {
+                    alert('Failed to create game');
+                }
+            } catch (error) {
+                alert('Failed to create game');
+            }
+        });
+
+        // Load games
+        async function loadGames() {
+            try {
+                const response = await fetch(`${API_URL}/api/games`);
+                const games = await response.json();
+                
+                const gamesList = document.getElementById('gamesList');
+                gamesList.innerHTML = games.map(game => `
+                    <div class="glass rounded-lg p-4">
+                        <h3 class="text-white font-medium">${game.name}</h3>
+                        <p class="text-white/60 text-sm">Code: ${game.game_code}</p>
+                        <p class="text-white/60 text-sm">Status: ${game.status}</p>
+                        <p class="text-white/60 text-sm">Players: ${game.player_count}/${game.max_players}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load games:', error);
+            }
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('token')) {
+            isLoggedIn = true;
+            document.getElementById('gameManagement').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'none';
+            loadGames();
+        }
+    </script>
+</body>
+</html>
